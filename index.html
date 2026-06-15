@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>IBI BG Remover | AI Background Removal & Color Replacement</title>
+  <!-- Google Fonts & simple CSS reset -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(145deg, #f6f9fc 0%, #eef2f5 100%);
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      color: #1a2c3e;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* header */
+    .brand {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .brand h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    .brand p {
+      color: #4a627a;
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+
+    /* card style */
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(2px);
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.02);
+      padding: 1.8rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .upload-area {
+      border: 2px dashed #b9d0e8;
+      border-radius: 28px;
+      background: #ffffffd9;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2rem;
+    }
+
+    .upload-area:hover {
+      border-color: #2b6a9f;
+      background: #f9fdfe;
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      background: #1e4663;
+      color: white;
+      padding: 0.7rem 1.8rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .file-input-label:hover {
+      background: #0f3552;
+      transform: scale(0.97);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .info-text {
+      font-size: 0.8rem;
+      color: #5e7b9c;
+      margin-top: 0.8rem;
+    }
+
+    /* grid layout */
+    .two-columns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin: 1.5rem 0 1.8rem;
+    }
+
+    .preview-panel {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .preview-title {
+      font-weight: 600;
+      margin-bottom: 0.9rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .image-box {
+      background: repeating-conic-gradient(#e2e8f0 0% 25%, #ffffff 0% 50%) 50% / 20px 20px;
+      border-radius: 24px;
+      padding: 1rem;
+      text-align: center;
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #dee7f0;
+    }
+
+    .image-box img, .image-box canvas {
+      max-width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      border-radius: 16px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+    }
+
+    .product-img {
+      max-width: 100%;
+      max-height: 280px;
+      border-radius: 16px;
+    }
+
+    .status-message {
+      background: #eef3fa;
+      border-radius: 40px;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+      color: #1a4972;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .color-options {
+      margin: 1.8rem 0 1.5rem;
+    }
+
+    .color-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin: 1rem 0 0.8rem;
+    }
+
+    .color-swatch {
+      width: 48px;
+      height: 48px;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.1s linear;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .color-swatch.active {
+      transform: scale(1.08);
+      border: 3px solid #111;
+      box-shadow: 0 0 0 2px white, 0 0 0 4px #1e4663;
+    }
+
+    .custom-color {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f1f5f9;
+      padding: 0.4rem 1rem;
+      border-radius: 60px;
+    }
+
+    .custom-color label {
+      font-weight: 500;
+    }
+
+    #customColorPicker {
+      width: 50px;
+      height: 45px;
+      border: 1px solid #cbdde9;
+      border-radius: 16px;
+      cursor: pointer;
+      background: white;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.8rem 1.6rem;
+      border-radius: 60px;
+      font-weight: 600;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .btn-primary {
+      background: #1e4663;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0e3552;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      border: 1px solid #b9d0e8;
+      background: white;
+    }
+
+    .btn-outline:hover {
+      background: #eef3fc;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      color: #6b8bad;
+    }
+    .hidden {
+      display: none;
+    }
+    .flex-center {
+      display: flex;
+      justify-content: center;
+    }
+    hr {
+      margin: 1rem 0;
+      border-color: #e2edf7;
+    }
+  </style>
+  <!-- IMGLY Background Removal Library (MIT, runs fully client-side) -->
+  <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.0/dist/background-removal.umd.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="brand">
+    <h1>✨ IBI BG Remover</h1>
+    <p>AI-powered background removal • Replace with any color • Download / Share</p>
+  </div>
+
+  <div class="card">
+    <!-- Upload section -->
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">🖼️</div>
+      <label class="file-input-label">
+        📁 Choose an image
+        <input type="file" id="imageUpload" accept="image/jpeg, image/png, image/jpg, image/webp">
+      </label>
+      <div class="info-text">Supports JPG, PNG, WEBP. First removal loads AI model (~5-10s).</div>
+    </div>
+
+    <!-- Status & progress -->
+    <div id="statusMessage" class="status-message">⚡ Ready — upload an image to remove background</div>
+
+    <div class="two-columns">
+      <!-- Left: Product (transparent output) -->
+      <div class="preview-panel">
+        <div class="preview-title">
+          <span>🧼 Product (Transparent)</span>
+        </div>
+        <div class="image-box" id="productBox">
+          <img id="productImg" class="product-img" alt="product preview" style="display: none;">
+          <div id="productPlaceholder" style="color:#9aaebf;">✨ After removal, transparent product appears</div>
+        </div>
+      </div>
+
+      <!-- Right: Final result with background color -->
+      <div class="preview-panel">
+        <div class="preview-title">
+          <span>🎨 Final Result + Background</span>
+        </div>
+        <div class="image-box" id="finalBox">
+          <canvas id="finalCanvas" style="max-width:100%; max-height:320px; display: none;"></canvas>
+          <div id="finalPlaceholder" style="color:#9aaebf;">🎯 Pick a color & see result</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color options row -->
+    <div class="color-options">
+      <div style="font-weight:500; margin-bottom:8px;">🎨 Replace background with:</div>
+      <div class="color-grid" id="colorSwatches">
+        <!-- preset swatches -->
+        <div class="color-swatch" style="background: #FFFFFF;" data-color="#FFFFFF"></div>
+        <div class="color-swatch" style="background: #000000;" data-color="#000000"></div>
+        <div class="color-swatch" style="background: #FF4D4D;" data-color="#FF4D4D"></div>
+        <div class="color-swatch" style="background: #4CAF50;" data-color="#4CAF50"></div>
+        <div class="color-swatch" style="background: #2196F3;" data-color="#2196F3"></div>
+        <div class="color-swatch" style="background: #FFC107;" data-color="#FFC107"></div>
+        <div class="color-swatch" style="background: #9C27B0;" data-color="#9C27B0"></div>
+        <div class="color-swatch" style="background: #FF9800;" data-color="#FF9800"></div>
+        <div class="custom-color">
+          <label>🎨 Custom</label>
+          <input type="color" id="customColorPicker" value="#D4E6F1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-buttons">
+      <button id="downloadBtn" class="btn btn-primary" disabled>⬇️ Download Image</button>
+      <button id="shareBtn" class="btn btn-outline" disabled>📤 Share Image</button>
+      <button id="resetBtn" class="btn btn-outline">🔄 New Image</button>
+    </div>
+  </div>
+  <footer>
+    ⚡ AI background removal runs locally in your browser • No data leaves your device
+  </footer>
+</div>
+
+<script>
+  // DOM elements
+  const fileInput = document.getElementById('imageUpload');
+  const uploadArea = document.getElementById('uploadArea');
+  const statusDiv = document.getElementById('statusMessage');
+  const productImg = document.getElementById('productImg');
+  const productPlaceholder = document.getElementById('productPlaceholder');
+  const finalCanvas = document.getElementById('finalCanvas');
+  const finalPlaceholder = document.getElementById('finalPlaceholder');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const customColorPicker = document.getElementById('customColorPicker');
+  
+  // State variables
+  let currentProductBlobUrl = null;          // blob URL of transparent product
+  let currentProductImageElement = null;      // HTMLImageElement loaded from transparent PNG
+  let productNaturalWidth = 0, productNaturalHeight = 0;
+  let currentSelectedColor = '#FFFFFF';       // default white background
+  let isProcessing = false;
+  let backgroundRemovalFunction = null;
+
+  // check if library loaded
+  function isLibraryReady() {
+    if (typeof backgroundRemoval === 'function') {
+      backgroundRemovalFunction = backgroundRemoval;
+      return true;
+    }
+    return false;
+  }
+
+  // Helper: show status
+  function setStatus(msg, isError = false) {
+    statusDiv.innerHTML = msg;
+    statusDiv.style.background = isError ? '#ffe6e5' : '#eef3fa';
+    statusDiv.style.color = isError ? '#b13e3e' : '#1a4972';
+  }
+
+  // Helper: enable/disable action buttons
+  function setButtonsEnabled(enabled) {
+    downloadBtn.disabled = !enabled;
+    shareBtn.disabled = !enabled;
+  }
+
+  // Reset UI state, revoke blob urls
+  function resetState() {
+    if (currentProductBlobUrl) {
+      URL.revokeObjectURL(currentProductBlobUrl);
+      currentProductBlobUrl = null;
+    }
+    if (currentProductImageElement) {
+      currentProductImageElement.onload = null;
+      currentProductImageElement = null;
+    }
+    productImg.style.display = 'none';
+    productPlaceholder.style.display = 'block';
+    finalCanvas.style.display = 'none';
+    finalPlaceholder.style.display = 'block';
+    setButtonsEnabled(false);
+    productNaturalWidth = 0;
+    productNaturalHeight = 0;
+    // clear canvas
+    const ctx = finalCanvas.getContext('2d');
+    ctx.clearRect(0, 0, finalCanvas.width, finalCanvas.height);
+    finalCanvas.width = 0;
+    finalCanvas.height = 0;
+  }
+
+  // draw final image onto canvas based on selected color and stored product image
+  async function renderFinalWithColor(colorHex) {
+    if (!currentProductImageElement || !currentProductImageElement.complete || currentProductImageElement.naturalWidth === 0) {
+      return false;
+    }
+    const img = currentProductImageElement;
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    if (width === 0 || height === 0) return false;
+    
+    // set canvas dimensions
+    finalCanvas.width = width;
+    finalCanvas.height = height;
+    const ctx = finalCanvas.getContext('2d');
+    // fill background with selected color
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0, 0, width, height);
+    // draw product (transparent PNG) on top
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    finalCanvas.style.display = 'block';
+    finalPlaceholder.style.display = 'none';
+    return true;
+  }
+
+  // when product image is loaded (transparent PNG), store and render default color
+  function onProductImageLoaded(imgElement, blobUrl) {
+    currentProductImageElement = imgElement;
+    productNaturalWidth = imgElement.naturalWidth;
+    productNaturalHeight = imgElement.naturalHeight;
+    // render final image with current selected color
+    renderFinalWithColor(currentSelectedColor).catch(e => console.warn(e));
+    setButtonsEnabled(true);
+    setStatus('✅ Background removed! Now pick a color or download the image.');
+  }
+
+  // core: remove background using IMGLY library
+  async function removeBackground(file) {
+    if (!isLibraryReady()) {
+      setStatus('❌ Background removal library still loading. Please wait a moment and try again.', true);
+      return false;
+    }
+    if (!file || !file.type.startsWith('image/')) {
+      setStatus('❌ Invalid file type. Please choose an image (JPEG, PNG, WEBP).', true);
+      return false;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setStatus('⚠️ Image too large (>15MB). Please choose a smaller image.', true);
+      return false;
+    }
+    
+    isProcessing = true;
+    setStatus('🔄 Removing background... AI model might download on first use (few MB). Please wait...');
+    
+    try {
+      // show status: model progress hook
+      const progressHandler = (key, progress) => {
+        if (key === 'model:download') {
+          setStatus(`🧠 Downloading AI model: ${Math.round(progress * 100)}% ...`);
+        } else if (key === 'remove:background') {
+          setStatus(`✂️ Removing background: ${Math.round(progress * 100)}%`);
+        }
+      };
+      
+      // call background removal: returns a Blob (PNG with transparency)
+      const resultBlob = await backgroundRemovalFunction(file, {
+        progress: progressHandler,
+        model: 'small',     // balanced quality/speed
+        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.0/dist/', // using standard
+      });
+      
+      if (!resultBlob) throw new Error('Background removal returned empty blob');
+      
+      // revoke old product blob if exists
+      if (currentProductBlobUrl) URL.revokeObjectURL(currentProductBlobUrl);
+      
+      const newBlobUrl = URL.createObjectURL(resultBlob);
+      currentProductBlobUrl = newBlobUrl;
+      
+      // create image element to display product preview & store for compositing
+      const imgElement = new Image();
+      imgElement.crossOrigin = "Anonymous"; // not needed for blob but safe
+      const loadPromise = new Promise((resolve, reject) => {
+        imgElement.onload = () => {
+          // set product preview image
+          productImg.src = newBlobUrl;
+          productImg.style.display = 'block';
+          productPlaceholder.style.display = 'none';
+          resolve(imgElement);
+        };
+        imgElement.onerror = (err) => reject(new Error('Failed to load product image'));
+      });
+      imgElement.src = newBlobUrl;
+      
+      const loadedImg = await loadPromise;
+      onProductImageLoaded(loadedImg, newBlobUrl);
+      isProcessing = false;
+      setStatus('🎉 Background removed! Select background color, download or share.');
+      return true;
+      
+    } catch (error) {
+      console.error(error);
+      setStatus(`⚠️ Background removal error: ${error.message || 'Unknown error'}. Try another image or refresh.`, true);
+      isProcessing = false;
+      resetState();
+      return false;
+    }
+  }
+
+  // handle image upload
+  async function handleImageUpload(file) {
+    if (!file) return;
+    resetState();
+    setStatus('🖼️ Loading image...');
+    await removeBackground(file);
+  }
+
+  // update background color from swatch or picker, re-render final image
+  function updateBackgroundColor(color) {
+    currentSelectedColor = color;
+    if (currentProductImageElement && currentProductImageElement.complete && currentProductImageElement.naturalWidth > 0) {
+      renderFinalWithColor(color);
+    } else {
+      // if product not ready, just store color for later
+      if (currentProductImageElement) {
+        // maybe still loading
+        if (currentProductImageElement.complete && currentProductImageElement.naturalWidth) {
+          renderFinalWithColor(color);
+        }
+      }
+    }
+    // update active swatch visual effect (optional)
+    document.querySelectorAll('.color-swatch').forEach(sw => {
+      if (sw.getAttribute('data-color') === color) {
+        sw.classList.add('active');
+      } else {
+        sw.classList.remove('active');
+      }
+    });
+  }
+
+  // download final canvas as PNG
+  function downloadFinalImage() {
+    if (!finalCanvas.style.display !== 'none' && finalCanvas.width > 0) {
+      try {
+        const link = document.createElement('a');
+        link.download = 'ibi_bg_removed.png';
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+        setStatus('✅ Image downloaded!', false);
+      } catch (e) {
+        setStatus('⚠️ Download failed', true);
+      }
+    } else {
+      setStatus('No final image available. First upload and remove background.', true);
+    }
+  }
+
+  // share final image using Web Share API (if supported)
+  async function shareFinalImage() {
+    if (!finalCanvas.width || finalCanvas.style.display === 'none') {
+      setStatus('No final image to share. Process an image first.', true);
+      return;
+    }
+    try {
+      const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Canvas conversion failed');
+      const file = new File([blob], 'ibi_product.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'IBI BG Remover',
+          text: 'Check out my image with custom background!',
+          files: [file],
+        });
+        setStatus('📤 Shared successfully!');
+      } else {
+        // fallback: download
+        setStatus('⚠️ Share not supported on this browser/context. Downloading instead.', true);
+        downloadFinalImage();
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setStatus('Sharing failed: ' + (err.message || 'unknown'), true);
+      }
+    }
+  }
+
+  // add color swatches listeners
+  function initColorControls() {
+    const swatches = document.querySelectorAll('.color-swatch');
+    swatches.forEach(swatch => {
+      swatch.addEventListener('click', (e) => {
+        const color = swatch.getAttribute('data-color');
+        if (color) {
+          updateBackgroundColor(color);
+          // sync custom picker value
+          customColorPicker.value = color;
+        }
+      });
+    });
+    customColorPicker.addEventListener('input', (e) => {
+      const newColor = e.target.value;
+      updateBackgroundColor(newColor);
+      // deactivate swatch active class
+      document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+    });
+  }
+
+  // upload area and file input events
+  function initUploadEvents() {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        handleImageUpload(file);
+      }
+      fileInput.value = ''; // allow re-upload same file
+    });
+    uploadArea.addEventListener('click', (e) => {
+      if (e.target === uploadArea || e.target.closest('.upload-area') && !e.target.closest('.file-input-label')) {
+        fileInput.click();
+      }
+    });
+    resetBtn.addEventListener('click', () => {
+      resetState();
+      setStatus('Reset done. Upload a new image to continue.');
+      fileInput.value = '';
+      currentProductImageElement = null;
+      if (currentProductBlobUrl) {
+        URL.revokeObjectURL(currentProductBlobUrl);
+        currentProductBlobUrl = null;
+      }
+      productPlaceholder.style.display = 'block';
+      productImg.style.display = 'none';
+      finalCanvas.style.display = 'none';
+      finalPlaceholder.style.display = 'block';
+      setButtonsEnabled(false);
+    });
+  }
+
+  // wait for library to be ready
+  function waitForLibrary() {
+    if (typeof backgroundRemoval !== 'undefined' && backgroundRemoval) {
+      backgroundRemovalFunction = backgroundRemoval;
+      setStatus('✅ AI model ready. Upload an image to remove background!');
+      return true;
+    } else {
+      setStatus('⏳ Loading background removal engine (first-time download) ...', false);
+      const checkInterval = setInterval(() => {
+        if (typeof backgroundRemoval !== 'undefined' && backgroundRemoval) {
+          backgroundRemovalFunction = backgroundRemoval;
+          setStatus('✅ Ready! Choose an image to remove background.');
+          clearInterval(checkInterval);
+        }
+      }, 300);
+      setTimeout(() => {
+        if (!backgroundRemovalFunction) {
+          setStatus('⚠️ Library load timeout. Please refresh the page.', true);
+        }
+      }, 15000);
+      return false;
+    }
+  }
+
+  // additional: handle paste? optional, but not needed for core
+  function preloadDefault() {
+    // set default white as active
+    updateBackgroundColor('#FFFFFF');
+    const defaultSwatch = document.querySelector('.color-swatch[data-color="#FFFFFF"]');
+    if (defaultSwatch) defaultSwatch.classList.add('active');
+  }
+  
+  // DRAG & DROP enhancement (extra polish)
+  function setupDragAndDrop() {
+    const dropZone = uploadArea;
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '#2b6a9f';
+      dropZone.style.background = '#f3f9ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = '#b9d0e8';
+      dropZone.style.background = '#ffffffd9';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '#b9d0e8';
+      dropZone.style.background = '#ffffffd9';
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        handleImageUpload(files[0]);
+      } else {
+        setStatus('Please drop a valid image file.', true);
+      }
+    });
+  }
+
+  // Initialization
+  function init() {
+    initColorControls();
+    initUploadEvents();
+    setupDragAndDrop();
+    waitForLibrary();
+    preloadDefault();
+    // disable buttons until product ready
+    setButtonsEnabled(false);
+    // if no product, reset
+    resetState();
+  }
+  
+  init();
+</script>
+</body>
+</html>
