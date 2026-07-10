@@ -2,7 +2,7 @@
  * Bump CACHE_VERSION on every release so the PWA refreshes its cached shell.
  * Convention matches the app version (v5.0 -> ibi-bgremoverc-v5-0).
  */
-const CACHE_VERSION = 'ibi-bgremoverc-v5-4';
+const CACHE_VERSION = 'ibi-bgremoverc-v5-5';
 const APP_SHELL = [
   './',
   './index.html',
